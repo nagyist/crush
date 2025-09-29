@@ -2,7 +2,7 @@ package chat
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/charmbracelet/bubbles/v2/help"
@@ -107,9 +107,9 @@ type chatPage struct {
 	header  header.Header
 	sidebar sidebar.Sidebar
 	// TODO(tauraamui) [29/09/2025]: rename this field and refs to "chatEntriesList"
-	chat    chat.MessageListCmp
-	editor  editor.Editor
-	splash  splash.Splash
+	chat   chat.MessageListCmp
+	editor editor.Editor
+	splash splash.Splash
 
 	// Simple state flags
 	showingDetails   bool
@@ -763,7 +763,7 @@ func chatSendMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
 
 	agent, intialised := cctx.CoderAgent()
 	if intialised == false {
-		cmds = append(cmds, util.ReportError(fmt.Errorf("coder agent is not initialized")))
+		cmds = append(cmds, util.ReportError(errors.New("coder agent is not initialized")))
 		return
 	}
 	if _, err := agent.Run(context.Background(), session.ID, msg.Text, msg.Attachments...); err != nil {
