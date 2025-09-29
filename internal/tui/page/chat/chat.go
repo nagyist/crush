@@ -762,7 +762,7 @@ func chatSendMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
 	}()
 
 	agent, intialised := cctx.CoderAgent()
-	if intialised == false {
+	if !intialised {
 		cmds = append(cmds, util.ReportError(errors.New("coder agent is not initialized")))
 		return
 	}
