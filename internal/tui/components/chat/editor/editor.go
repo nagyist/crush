@@ -163,12 +163,10 @@ func (m *editorCmp) send() tea.Cmd {
 	// Change the placeholder when sending a new message.
 	m.randomizePlaceholders()
 
-	return tea.Batch(
-		util.CmdHandler(chat.SendMsg{
-			Text:        value,
-			Attachments: attachments,
-		}),
-	)
+	return util.CmdHandler(chat.SendMsg{
+		Text:        value,
+		Attachments: attachments,
+	})
 }
 
 func (m *editorCmp) repositionCompletions() tea.Msg {
