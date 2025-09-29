@@ -165,7 +165,7 @@ func (m *editorCmp) send() tea.Cmd {
 
 	return util.CmdHandler(chat.SendMsg{
 		Msg: chat.Msg{
-			Text: value,
+			Text:        value,
 			Attachments: attachments,
 		},
 	})
