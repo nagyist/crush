@@ -164,8 +164,10 @@ func (m *editorCmp) send() tea.Cmd {
 	m.randomizePlaceholders()
 
 	return util.CmdHandler(chat.SendMsg{
-		Text:        value,
-		Attachments: attachments,
+		Msg: chat.Msg{
+			Text: value,
+			Attachments: attachments,
+		},
 	})
 }
 

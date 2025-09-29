@@ -22,6 +22,10 @@ import (
 )
 
 type SendMsg struct {
+	Msg
+}
+
+type Msg struct {
 	Text        string
 	Attachments []message.Attachment
 }

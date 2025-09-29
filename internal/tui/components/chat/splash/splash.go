@@ -334,7 +334,9 @@ func (s *splashCmp) initializeProject() tea.Cmd {
 		cmds = append(cmds,
 			util.CmdHandler(chat.SessionClearedMsg{}),
 			util.CmdHandler(chat.SendMsg{
-				Text: prompt.Initialize(),
+				Msg: chat.Msg{
+					Text: prompt.Initialize(),
+				},
 			}),
 		)
 	}

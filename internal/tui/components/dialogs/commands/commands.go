@@ -402,7 +402,9 @@ func (c *commandDialogCmp) defaultCommands() []Command {
 			Description: "Create/Update the CRUSH.md memory file",
 			Handler: func(cmd Command) tea.Cmd {
 				return util.CmdHandler(chat.SendMsg{
-					Text: prompt.Initialize(),
+					Msg: chat.Msg{
+						Text: prompt.Initialize(),
+					},
 				})
 			},
 		},
