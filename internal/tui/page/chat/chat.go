@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/catwalk/pkg/catwalk"
 	"github.com/charmbracelet/crush/internal/app"
 	"github.com/charmbracelet/crush/internal/config"
+	"github.com/charmbracelet/crush/internal/crush"
 	"github.com/charmbracelet/crush/internal/history"
 	"github.com/charmbracelet/crush/internal/message"
 	"github.com/charmbracelet/crush/internal/permission"
@@ -105,6 +106,7 @@ type chatPage struct {
 	// Components
 	header  header.Header
 	sidebar sidebar.Sidebar
+	// TODO(tauraamui) [29/09/2025]: rename this field and refs to "chatEntriesList"
 	chat    chat.MessageListCmp
 	editor  editor.Editor
 	splash  splash.Splash
@@ -237,7 +239,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		p.editor = u.(editor.Editor)
 		return p, cmd
 	case chat.SendMsg:
-		return p, p.sendMessage(msg.Text, msg.Attachments)
+		return p, tea.Batch(p.sendMessage(msg.Msg), p.chat.GoToBottom())
 	case chat.SessionSelectedMsg:
 		return p, p.setSession(msg)
 	case splash.SubmitAPIKeyMsg:
@@ -335,7 +337,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return p, util.ReportWarn("Agent is busy, please wait before executing a command...")
 		}
 
-		cmd := p.sendMessage(msg.Content, nil)
+		cmd := p.sendMessage(chat.Msg{Text: msg.Content})
 		if cmd != nil {
 			return p, cmd
 		}
@@ -738,26 +740,37 @@ func (p *chatPage) toggleDetails() {
 // NOTE(tauraamui) [29/09/2025]:
 //
 // this is likely where we can go about storing the history of user generated/sent messages
-func (p *chatPage) sendMessage(text string, attachments []message.Attachment) tea.Cmd {
-	session := p.session
-	var cmds []tea.Cmd
-	if p.session.ID == "" {
-		newSession, err := p.app.Sessions.Create(context.Background(), "New Session")
-		if err != nil {
-			return util.ReportError(err)
-		}
-		session = newSession
-		cmds = append(cmds, util.CmdHandler(chat.SessionSelectedMsg(session)))
-	}
-	if p.app.CoderAgent == nil {
-		return util.ReportError(fmt.Errorf("coder agent is not initialized"))
-	}
-	_, err := p.app.CoderAgent.Run(context.Background(), session.ID, text, attachments...)
+func (p *chatPage) sendMessage(msg chat.Msg) tea.Cmd {
+	return chatSendMessage(crush.NewContext(), msg)
+}
+
+func chatSendMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
+	session, err := cctx.ResolveCurrentSession()
 	if err != nil {
-		return util.ReportError(err)
+		cmd = util.ReportError(err)
+		return
 	}
-	cmds = append(cmds, p.chat.GoToBottom())
-	return tea.Batch(cmds...)
+
+	// NOTE(tauraamui) [29/09/2025]:
+	// if we were able to resolve the session, we now still want to emit the selected session
+	// message no matter what else fails/errors
+	cmds := []tea.Cmd{
+		util.CmdHandler(chat.SessionSelectedMsg(session)),
+	}
+	defer func() {
+		cmd = tea.Batch(cmds...)
+	}()
+
+	agent, intialised := cctx.CoderAgent()
+	if intialised == false {
+		cmds = append(cmds, util.ReportError(fmt.Errorf("coder agent is not initialized")))
+		return
+	}
+	if _, err := agent.Run(context.Background(), session.ID, msg.Text, msg.Attachments...); err != nil {
+		cmds = append(cmds, util.ReportError(err))
+		return
+	}
+	return
 }
 
 func (p *chatPage) Bindings() []key.Binding {
