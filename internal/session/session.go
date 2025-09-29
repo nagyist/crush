@@ -23,6 +23,15 @@ type Session struct {
 	UpdatedAt        int64
 }
 
+// NOTE(tauraamui) [29/09/2025]:
+//
+// We're essentially using the repository pattern here, so this "service" is just a description
+// of the client we're using to interact with the stored data re: sessions. It would be much nicer/better/clearer
+// if we actually made this distinction extremely clear. Hence,
+// TODO(tauraamui):
+//
+// Should rename this and all useages to be 'SessionRepo', or even better potentially, we just create a
+// repo package, and make a session repo instance type live there. Either way, it'll make this much clearer.
 type Service interface {
 	pubsub.Suscriber[Session]
 	Create(ctx context.Context, title string) (Session, error)
