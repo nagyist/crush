@@ -735,6 +735,9 @@ func (p *chatPage) toggleDetails() {
 	p.setShowDetails(!p.showingDetails)
 }
 
+// NOTE(tauraamui) [29/09/2025]:
+//
+// this is likely where we can go about storing the history of user generated/sent messages
 func (p *chatPage) sendMessage(text string, attachments []message.Attachment) tea.Cmd {
 	session := p.session
 	var cmds []tea.Cmd

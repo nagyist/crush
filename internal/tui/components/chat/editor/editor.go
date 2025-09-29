@@ -137,6 +137,11 @@ func (m *editorCmp) Init() tea.Cmd {
 	return nil
 }
 
+// NOTE(tauraamui) [29/09/2025]:
+//
+// this is the nexus of interest when it comes to understanding
+//
+//	how we can infer what user generated messages to store to history
 func (m *editorCmp) send() tea.Cmd {
 	value := m.textarea.Value()
 	value = strings.TrimSpace(value)
