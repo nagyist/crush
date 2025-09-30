@@ -89,6 +89,7 @@ func cancelTimerCmd() tea.Cmd {
 }
 
 type chatPage struct {
+	cctx crush.Context
 	width, height               int
 	detailsWidth, detailsHeight int
 	app                         *app.App
@@ -100,7 +101,8 @@ type chatPage struct {
 	focusedPane  PanelType
 
 	// Session
-	session session.Session
+	// session session.Session
+	hasActiveSession bool
 	keyMap  KeyMap
 
 	// Components
@@ -381,7 +383,8 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return p, util.ReportWarn("File attachments are not supported by the current model: " + model.Name)
 			}
 		case key.Matches(msg, p.keyMap.Tab):
-			if p.session.ID == "" {
+			if !p.hasActiveSession {
+			// if p.session.ID == "" {
 				u, cmd := p.splash.Update(msg)
 				p.splash = u.(splash.Splash)
 				return p, cmd
@@ -389,7 +392,8 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			p.changeFocus()
 			return p, nil
 		case key.Matches(msg, p.keyMap.Cancel):
-			if p.session.ID != "" && p.app.CoderAgent.IsBusy() {
+			if p.hasActiveSession && p.app.CoderAgent.IsBusy() {
+			// if p.session.ID != "" && p.app.CoderAgent.IsBusy() {
 				return p, p.cancel()
 			}
 		case key.Matches(msg, p.keyMap.Details):
@@ -731,7 +735,8 @@ func (p *chatPage) setShowDetails(show bool) {
 }
 
 func (p *chatPage) toggleDetails() {
-	if p.session.ID == "" || !p.compact {
+	session, _ := p.cctx.ResolveCurrentSession()
+	if session.ID == "" || !p.compact {
 		return
 	}
 	p.setShowDetails(!p.showingDetails)
