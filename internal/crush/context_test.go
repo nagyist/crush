@@ -119,6 +119,33 @@ func TestContext_MakeSessionCurrentLoadsAndStoresDataForGivenSessionByID(t *test
 	assert.Equal(t, sessionToGet, sess)
 }
 
+func TestContext_MakeSessionCurrentLoadsDoesNotInteractWithRepoSecondTime(t *testing.T) {
+	sessionToGet := session.Session{
+		ID: "test-old-dusty-session",
+	}
+	sessRepo := mockSessionRepo{
+		toGetSession: sessionToGet,
+	}
+
+	cctx := crush.NewContext(&sessRepo)
+
+	err := cctx.MakeSessionCurrent("test-old-dusty-session")
+	require.NoError(t, err)
+	assert.True(t, sessRepo.getInvoked)
+
+	// set this back
+	sessRepo.getInvoked = false
+
+	sess, err := cctx.ResolveCurrentSession()
+	require.NoError(t, err)
+	assert.False(t, sessRepo.createInvoked)
+	assert.Equal(t, sessionToGet, sess)
+
+	err = cctx.MakeSessionCurrent("test-old-dusty-session")
+	require.NoError(t, err)
+	assert.False(t, sessRepo.getInvoked)
+}
+
 func TestContext_MakeSessionCurrentLoadsAndStoresDataForGivenSessionByIDErrorsOnGet(t *testing.T) {
 	sessRepo := mockSessionRepo{
 		getErr: errors.New("test failed to get session entry"),
