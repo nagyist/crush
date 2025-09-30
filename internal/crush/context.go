@@ -53,7 +53,7 @@ func (c *ccontext) MakeSessionCurrent(id string) error {
 
 	sess, err := c.sessRepo.Get(context.Background(), id)
 	if err != nil {
-		return fmt.Errorf("unable to load session: %s from storage: %w", id, err)
+		return fmt.Errorf("unable to load session '%s' from storage: %w", id, err)
 	}
 
 	c.currentSession = &sess
