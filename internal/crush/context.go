@@ -1,6 +1,9 @@
 package crush
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/charmbracelet/crush/internal/llm/agent"
 	"github.com/charmbracelet/crush/internal/session"
 	"github.com/charmbracelet/crush/internal/tui/components/chat"
@@ -20,32 +23,33 @@ type Context interface {
 	ResolveCurrentSession() (session.Session, error)
 }
 
-func NewContext() Context {
-	return &context{}
+func NewContext(sessRepo session.Repository) Context {
+	return &ccontext{
+		sessRepo: sessRepo,
+	}
 }
 
-type context struct {
-	sessions session.Service
+type ccontext struct {
+	sessRepo       session.Repository
+	currentSession *session.Session
+	coderAgent     agent.Service
 }
 
-func (c *context) ResolveCurrentSession() (session.Session, error) {
-	/*
-		if p.session.ID == "" {
-			newSession, err := p.app.Sessions.Create(context.Background(), "New Session")
-			if err != nil {
-				return util.ReportError(err)
-			}
-			session = newSession
-			cmds = append(cmds, util.CmdHandler(chat.SessionSelectedMsg(session)))
+func (c *ccontext) ResolveCurrentSession() (session.Session, error) {
+	if c.currentSession == nil {
+		newSession, err := c.sessRepo.Create(context.Background(), "New Session")
+		if err != nil {
+			return session.Session{}, fmt.Errorf("failed to create session: %w", err)
 		}
-	*/
-	return session.Session{}, nil
+		c.currentSession = &newSession
+	}
+	return *c.currentSession, nil
 }
 
-func (c *context) MakeSessionCurrent(id string) error {
+func (c *ccontext) MakeSessionCurrent(id string) error {
 	return nil
 }
 
-func (c *context) CoderAgent() (agent.Service, bool) {
+func (c *ccontext) CoderAgent() (agent.Service, bool) {
 	return nil, false
 }
