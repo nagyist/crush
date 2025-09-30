@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/crush/internal/crush"
-	"github.com/charmbracelet/crush/internal/pubsub"
 	"github.com/charmbracelet/crush/internal/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,10 +12,6 @@ import (
 
 type mockSessionRepo struct {
 	createdSession session.Session
-}
-
-func (m *mockSessionRepo) Subscribe(context.Context) <-chan pubsub.Event[session.Session] {
-	return nil
 }
 
 func (m *mockSessionRepo) Create(ctx context.Context, title string) (session.Session, error) {
