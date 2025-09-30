@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/v2/help"
@@ -455,7 +456,8 @@ func (p *chatPage) View() string {
 	var chatView string
 	t := styles.CurrentTheme()
 
-	if p.session.ID == "" {
+	if !p.hasActiveSession {
+	// if p.session.ID == "" {
 		splashView := p.splash.View()
 		// Full screen during onboarding or project initialization
 		if p.splashFullScreen {
@@ -635,7 +637,8 @@ func (p *chatPage) SetSize(width, height int) tea.Cmd {
 	p.height = height
 	var cmds []tea.Cmd
 
-	if p.session.ID == "" {
+	if !p.hasActiveSession {
+	// if p.session.ID == "" {
 		if p.splashFullScreen {
 			cmds = append(cmds, p.splash.SetSize(width, height))
 		} else {
@@ -661,11 +664,16 @@ func (p *chatPage) SetSize(width, height int) tea.Cmd {
 }
 
 func (p *chatPage) newSession() tea.Cmd {
-	if p.session.ID == "" {
+	if !p.hasActiveSession {
+	// if p.session.ID == "" {
 		return nil
 	}
 
-	p.session = session.Session{}
+	if _, err := p.cctx.ResolveCurrentSession(); err != nil {
+		return util.ReportError(fmt.Errorf("failed to initialise new session: %w", err))
+	}
+	p.hasActiveSession = true
+	// p.session = session.Session{}
 	p.focusedPane = PanelTypeEditor
 	p.editor.Focus()
 	p.chat.Blur()
@@ -677,13 +685,22 @@ func (p *chatPage) newSession() tea.Cmd {
 }
 
 func (p *chatPage) setSession(session session.Session) tea.Cmd {
+	/*
 	if p.session.ID == session.ID {
 		return nil
 	}
+	*/
+	if err := p.cctx.MakeSessionCurrent(session.ID); err != nil {
+		return util.ReportError(fmt.Errorf("failed to make session %s active: %w", session.ID, err))
+	}
 
 	var cmds []tea.Cmd
-	p.session = session
+	// p.session = session
 
+	// NOTE(tauraamui) [30/09/2025]:
+	//
+	// this would become redundant as the only place we'd have to manage which session is
+	// the currently active one would be in the crush context itself
 	cmds = append(cmds, p.SetSize(p.width, p.height))
 	cmds = append(cmds, p.chat.SetSession(session))
 	cmds = append(cmds, p.sidebar.SetSession(session))
@@ -694,7 +711,8 @@ func (p *chatPage) setSession(session session.Session) tea.Cmd {
 }
 
 func (p *chatPage) changeFocus() {
-	if p.session.ID == "" {
+	if !p.hasActiveSession {
+	// if p.session.ID == "" {
 		return
 	}
 	switch p.focusedPane {
@@ -710,16 +728,20 @@ func (p *chatPage) changeFocus() {
 }
 
 func (p *chatPage) cancel() tea.Cmd {
+	sess, err := p.cctx.ResolveCurrentSession()
+	if err != nil {
+		return util.ReportError(fmt.Errorf("failed to acquire current session: %w", err))
+	}
 	if p.isCanceling {
 		p.isCanceling = false
 		if p.app.CoderAgent != nil {
-			p.app.CoderAgent.Cancel(p.session.ID)
+			p.app.CoderAgent.Cancel(sess.ID)
 		}
 		return nil
 	}
 
-	if p.app.CoderAgent != nil && p.app.CoderAgent.QueuedPrompts(p.session.ID) > 0 {
-		p.app.CoderAgent.ClearQueue(p.session.ID)
+	if p.app.CoderAgent != nil && p.app.CoderAgent.QueuedPrompts(sess.ID) > 0 {
+		p.app.CoderAgent.ClearQueue(sess.ID)
 		return nil
 	}
 	p.isCanceling = true
@@ -915,7 +937,11 @@ func (p *chatPage) Help() help.KeyMap {
 					key.WithHelp("esc", "press again to cancel"),
 				)
 			}
-			if p.app.CoderAgent != nil && p.app.CoderAgent.QueuedPrompts(p.session.ID) > 0 {
+			sess, err := p.cctx.ResolveCurrentSession()
+			if err != nil {
+				panic(err) // NOTE(tauraamui) [30/09/2025]: sort this out later
+			}
+			if p.app.CoderAgent != nil && p.app.CoderAgent.QueuedPrompts(sess.ID) > 0 {
 				cancelBinding = key.NewBinding(
 					key.WithKeys("esc", "alt+esc"),
 					key.WithHelp("esc", "clear queue"),
@@ -930,7 +956,8 @@ func (p *chatPage) Help() help.KeyMap {
 		}
 		globalBindings := []key.Binding{}
 		// we are in a session
-		if p.session.ID != "" {
+		if p.hasActiveSession {
+		// if p.session.ID != "" {
 			tabKey := key.NewBinding(
 				key.WithKeys("tab"),
 				key.WithHelp("tab", "focus chat"),
@@ -959,7 +986,8 @@ func (p *chatPage) Help() help.KeyMap {
 				key.WithHelp("ctrl+s", "sessions"),
 			),
 		)
-		if p.session.ID != "" {
+		if p.hasActiveSession {
+		// if p.session.ID != "" {
 			globalBindings = append(globalBindings,
 				key.NewBinding(
 					key.WithKeys("ctrl+n"),
@@ -1097,7 +1125,8 @@ func (p *chatPage) IsChatFocused() bool {
 // Returns true if the mouse is over the chat area, false otherwise.
 func (p *chatPage) isMouseOverChat(x, y int) bool {
 	// No session means no chat area
-	if p.session.ID == "" {
+	if !p.hasActiveSession {
+	// if p.session.ID == "" {
 		return false
 	}
 

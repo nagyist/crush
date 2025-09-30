@@ -15,8 +15,9 @@ type PromptHistory struct {
 }
 
 type Context interface {
-	ResolveCurrentSession() (session.Session, error)
 	CoderAgent() (agent.Service, bool)
+	MakeSessionCurrent(id string) error
+	ResolveCurrentSession() (session.Session, error)
 }
 
 func NewContext() Context {
@@ -39,6 +40,10 @@ func (c *context) ResolveCurrentSession() (session.Session, error) {
 		}
 	*/
 	return session.Session{}, nil
+}
+
+func (c *context) MakeSessionCurrent(id string) error {
+	return nil
 }
 
 func (c *context) CoderAgent() (agent.Service, bool) {
