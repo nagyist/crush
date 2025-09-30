@@ -125,6 +125,7 @@ type chatPage struct {
 func New(app *app.App) ChatPage {
 	return &chatPage{
 		app:         app,
+		cctx: crush.NewContext(app.Sessions),
 		keyMap:      DefaultKeyMap(),
 		header:      header.New(app.LSPClients),
 		sidebar:     sidebar.New(app.History, app.LSPClients, false),
@@ -768,7 +769,7 @@ func (p *chatPage) toggleDetails() {
 //
 // this is likely where we can go about storing the history of user generated/sent messages
 func (p *chatPage) sendMessage(msg chat.Msg) tea.Cmd {
-	return chatSendMessage(crush.NewContext(p.app.Sessions), msg)
+	return chatSendMessage(p.cctx, msg)
 }
 
 func chatSendMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
