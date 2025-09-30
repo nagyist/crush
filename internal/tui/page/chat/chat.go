@@ -757,8 +757,8 @@ func (p *chatPage) setShowDetails(show bool) {
 }
 
 func (p *chatPage) toggleDetails() {
-	session, _ := p.cctx.ResolveCurrentSession()
-	if session.ID == "" || !p.compact {
+	if !p.hasActiveSession || !p.compact {
+	// if p.session.ID == "" || !p.compact {
 		return
 	}
 	p.setShowDetails(!p.showingDetails)
