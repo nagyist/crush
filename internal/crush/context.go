@@ -47,6 +47,17 @@ func (c *ccontext) ResolveCurrentSession() (session.Session, error) {
 }
 
 func (c *ccontext) MakeSessionCurrent(id string) error {
+	if c.currentSession != nil && c.currentSession.ID == id {
+		return nil
+	}
+
+	sess, err := c.sessRepo.Get(context.Background(), id)
+	if err != nil {
+		return fmt.Errorf("unable to load session: %s from storage: %w", id, err)
+	}
+
+	c.currentSession = &sess
+
 	return nil
 }
 
