@@ -32,6 +32,10 @@ type Session struct {
 //
 // Should rename this and all useages to be 'SessionRepo', or even better potentially, we just create a
 // repo package, and make a session repo instance type live there. Either way, it'll make this much clearer.
+type Repository interface {
+	Service
+}
+
 type Service interface {
 	pubsub.Suscriber[Session]
 	Create(ctx context.Context, title string) (Session, error)

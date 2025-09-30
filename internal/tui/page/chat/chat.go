@@ -90,7 +90,7 @@ func cancelTimerCmd() tea.Cmd {
 }
 
 type chatPage struct {
-	cctx crush.Context
+	cctx                        crush.Context
 	width, height               int
 	detailsWidth, detailsHeight int
 	app                         *app.App
@@ -104,7 +104,7 @@ type chatPage struct {
 	// Session
 	// session session.Session
 	hasActiveSession bool
-	keyMap  KeyMap
+	keyMap           KeyMap
 
 	// Components
 	header  header.Header
@@ -385,7 +385,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, p.keyMap.Tab):
 			if !p.hasActiveSession {
-			// if p.session.ID == "" {
+				// if p.session.ID == "" {
 				u, cmd := p.splash.Update(msg)
 				p.splash = u.(splash.Splash)
 				return p, cmd
@@ -394,7 +394,7 @@ func (p *chatPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return p, nil
 		case key.Matches(msg, p.keyMap.Cancel):
 			if p.hasActiveSession && p.app.CoderAgent.IsBusy() {
-			// if p.session.ID != "" && p.app.CoderAgent.IsBusy() {
+				// if p.session.ID != "" && p.app.CoderAgent.IsBusy() {
 				return p, p.cancel()
 			}
 		case key.Matches(msg, p.keyMap.Details):
@@ -457,7 +457,7 @@ func (p *chatPage) View() string {
 	t := styles.CurrentTheme()
 
 	if !p.hasActiveSession {
-	// if p.session.ID == "" {
+		// if p.session.ID == "" {
 		splashView := p.splash.View()
 		// Full screen during onboarding or project initialization
 		if p.splashFullScreen {
@@ -638,7 +638,7 @@ func (p *chatPage) SetSize(width, height int) tea.Cmd {
 	var cmds []tea.Cmd
 
 	if !p.hasActiveSession {
-	// if p.session.ID == "" {
+		// if p.session.ID == "" {
 		if p.splashFullScreen {
 			cmds = append(cmds, p.splash.SetSize(width, height))
 		} else {
@@ -665,7 +665,7 @@ func (p *chatPage) SetSize(width, height int) tea.Cmd {
 
 func (p *chatPage) newSession() tea.Cmd {
 	if !p.hasActiveSession {
-	// if p.session.ID == "" {
+		// if p.session.ID == "" {
 		return nil
 	}
 
@@ -686,9 +686,9 @@ func (p *chatPage) newSession() tea.Cmd {
 
 func (p *chatPage) setSession(session session.Session) tea.Cmd {
 	/*
-	if p.session.ID == session.ID {
-		return nil
-	}
+		if p.session.ID == session.ID {
+			return nil
+		}
 	*/
 	if err := p.cctx.MakeSessionCurrent(session.ID); err != nil {
 		return util.ReportError(fmt.Errorf("failed to make session %s active: %w", session.ID, err))
@@ -712,7 +712,7 @@ func (p *chatPage) setSession(session session.Session) tea.Cmd {
 
 func (p *chatPage) changeFocus() {
 	if !p.hasActiveSession {
-	// if p.session.ID == "" {
+		// if p.session.ID == "" {
 		return
 	}
 	switch p.focusedPane {
@@ -768,7 +768,7 @@ func (p *chatPage) toggleDetails() {
 //
 // this is likely where we can go about storing the history of user generated/sent messages
 func (p *chatPage) sendMessage(msg chat.Msg) tea.Cmd {
-	return chatSendMessage(crush.NewContext(), msg)
+	return chatSendMessage(crush.NewContext(p.app.Sessions), msg)
 }
 
 func chatSendMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
@@ -957,7 +957,7 @@ func (p *chatPage) Help() help.KeyMap {
 		globalBindings := []key.Binding{}
 		// we are in a session
 		if p.hasActiveSession {
-		// if p.session.ID != "" {
+			// if p.session.ID != "" {
 			tabKey := key.NewBinding(
 				key.WithKeys("tab"),
 				key.WithHelp("tab", "focus chat"),
@@ -987,7 +987,7 @@ func (p *chatPage) Help() help.KeyMap {
 			),
 		)
 		if p.hasActiveSession {
-		// if p.session.ID != "" {
+			// if p.session.ID != "" {
 			globalBindings = append(globalBindings,
 				key.NewBinding(
 					key.WithKeys("ctrl+n"),
@@ -1126,7 +1126,7 @@ func (p *chatPage) IsChatFocused() bool {
 func (p *chatPage) isMouseOverChat(x, y int) bool {
 	// No session means no chat area
 	if !p.hasActiveSession {
-	// if p.session.ID == "" {
+		// if p.session.ID == "" {
 		return false
 	}
 
