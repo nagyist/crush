@@ -16,6 +16,7 @@ type mockSessionRepo struct {
 	createErr      error
 	getInvoked     bool
 	toGetSession   session.Session
+	getErr error
 }
 
 func (m *mockSessionRepo) Create(ctx context.Context, title string) (session.Session, error) {
@@ -32,7 +33,7 @@ func (m *mockSessionRepo) CreateTaskSession(ctx context.Context, toolCallID, par
 
 func (m *mockSessionRepo) Get(ctx context.Context, id string) (session.Session, error) {
 	m.getInvoked = true
-	return m.toGetSession, nil
+	return m.toGetSession, m.getErr
 }
 
 func (m *mockSessionRepo) List(ctx context.Context) ([]session.Session, error) {
@@ -90,4 +91,15 @@ func TestContext_MakeSessionCurrentLoadsAndStoresDataForGivenSessionByID(t *test
 	sess, err := cctx.ResolveCurrentSession()
 	require.NoError(t, err)
 	assert.Equal(t, sessionToGet, sess)
+}
+
+func TestContext_MakeSessionCurrentLoadsAndStoresDataForGivenSessionByIDErrorsOnGet(t *testing.T) {
+	sessRepo := mockSessionRepo{
+		getErr: errors.New("test failed to get session entry"),
+	}
+
+	cctx := crush.NewContext(&sessRepo)
+
+	err := cctx.MakeSessionCurrent("test-old-dusty-session")
+	require.EqualError(t, err, "unable to load session 'test-old-dusty-session' from storage: test failed to get session entry")
 }
