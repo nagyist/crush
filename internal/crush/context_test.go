@@ -12,6 +12,7 @@ import (
 )
 
 type mockSessionRepo struct {
+	createInvoked bool
 	createdSession session.Session
 	createErr      error
 	getInvoked     bool
@@ -20,6 +21,7 @@ type mockSessionRepo struct {
 }
 
 func (m *mockSessionRepo) Create(ctx context.Context, title string) (session.Session, error) {
+	m.createInvoked = true
 	return m.createdSession, m.createErr
 }
 
@@ -60,6 +62,30 @@ func TestContext_ResolveCurrentSessionCreatesNewSession(t *testing.T) {
 
 	sess, err := cctx.ResolveCurrentSession()
 	require.NoError(t, err)
+	assert.Equal(t, justCreatedSession, sess)
+}
+
+func TestContext_ResolveCurrentSessionCreatesNewSessionOnlyOnce(t *testing.T) {
+	justCreatedSession := session.Session{
+		ID: "test-just-created-session",
+	}
+	sessRepo := mockSessionRepo{
+		createdSession: justCreatedSession,
+	}
+
+	cctx := crush.NewContext(&sessRepo)
+
+	sess, err := cctx.ResolveCurrentSession()
+	require.NoError(t, err)
+	assert.True(t, sessRepo.createInvoked)
+	assert.Equal(t, justCreatedSession, sess)
+
+	// set this back
+	sessRepo.createInvoked = false
+
+	sess, err = cctx.ResolveCurrentSession()
+	require.NoError(t, err)
+	assert.False(t, sessRepo.createInvoked)
 	assert.Equal(t, justCreatedSession, sess)
 }
 
