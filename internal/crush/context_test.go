@@ -12,6 +12,8 @@ import (
 
 type mockSessionRepo struct {
 	createdSession session.Session
+	getInvoked     bool
+	toGetSession   session.Session
 }
 
 func (m *mockSessionRepo) Create(ctx context.Context, title string) (session.Session, error) {
@@ -27,7 +29,8 @@ func (m *mockSessionRepo) CreateTaskSession(ctx context.Context, toolCallID, par
 }
 
 func (m *mockSessionRepo) Get(ctx context.Context, id string) (session.Session, error) {
-	return session.Session{}, nil
+	m.getInvoked = true
+	return m.toGetSession, nil
 }
 
 func (m *mockSessionRepo) List(ctx context.Context) ([]session.Session, error) {
@@ -55,4 +58,23 @@ func TestContext_ResolveCurrentSessionCreatesNewSession(t *testing.T) {
 	sess, err := cctx.ResolveCurrentSession()
 	require.NoError(t, err)
 	assert.Equal(t, justCreatedSession, sess)
+}
+
+func TestContext_MakeSessionCurrentLoadsAndStoresDataForGivenSessionByID(t *testing.T) {
+	sessionToGet := session.Session{
+		ID: "test-old-dusty-session",
+	}
+	sessRepo := mockSessionRepo{
+		toGetSession: sessionToGet,
+	}
+
+	cctx := crush.NewContext(&sessRepo)
+
+	err := cctx.MakeSessionCurrent("test-old-dusty-session")
+	require.NoError(t, err)
+	assert.True(t, sessRepo.getInvoked)
+
+	sess, err := cctx.ResolveCurrentSession()
+	require.NoError(t, err)
+	assert.Equal(t, sessionToGet, sess)
 }
