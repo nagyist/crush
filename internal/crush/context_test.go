@@ -2,6 +2,7 @@ package crush_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/charmbracelet/crush/internal/crush"
@@ -12,12 +13,13 @@ import (
 
 type mockSessionRepo struct {
 	createdSession session.Session
+	createErr      error
 	getInvoked     bool
 	toGetSession   session.Session
 }
 
 func (m *mockSessionRepo) Create(ctx context.Context, title string) (session.Session, error) {
-	return m.createdSession, nil
+	return m.createdSession, m.createErr
 }
 
 func (m *mockSessionRepo) CreateTitleSession(ctx context.Context, parentSessionID string) (session.Session, error) {
@@ -58,6 +60,17 @@ func TestContext_ResolveCurrentSessionCreatesNewSession(t *testing.T) {
 	sess, err := cctx.ResolveCurrentSession()
 	require.NoError(t, err)
 	assert.Equal(t, justCreatedSession, sess)
+}
+
+func TestContext_ResolveCurrentSessionCreatesNewSessionErrorsOnCreate(t *testing.T) {
+	sessRepo := mockSessionRepo{
+		createErr: errors.New("test failed to create session entry"),
+	}
+
+	cctx := crush.NewContext(&sessRepo)
+
+	_, err := cctx.ResolveCurrentSession()
+	require.EqualError(t, err, "failed to create session: test failed to create session entry")
 }
 
 func TestContext_MakeSessionCurrentLoadsAndStoresDataForGivenSessionByID(t *testing.T) {
