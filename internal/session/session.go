@@ -33,11 +33,6 @@ type Session struct {
 // Should rename this and all useages to be 'SessionRepo', or even better potentially, we just create a
 // repo package, and make a session repo instance type live there. Either way, it'll make this much clearer.
 type Repository interface {
-	Service
-}
-
-type Service interface {
-	pubsub.Suscriber[Session]
 	Create(ctx context.Context, title string) (Session, error)
 	CreateTitleSession(ctx context.Context, parentSessionID string) (Session, error)
 	CreateTaskSession(ctx context.Context, toolCallID, parentSessionID, title string) (Session, error)
@@ -45,6 +40,11 @@ type Service interface {
 	List(ctx context.Context) ([]Session, error)
 	Save(ctx context.Context, session Session) (Session, error)
 	Delete(ctx context.Context, id string) error
+}
+
+type Service interface {
+	pubsub.Suscriber[Session]
+	Repository
 }
 
 type service struct {
