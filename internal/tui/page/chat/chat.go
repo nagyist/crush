@@ -125,7 +125,7 @@ type chatPage struct {
 func New(app *app.App) ChatPage {
 	return &chatPage{
 		app:         app,
-		cctx: crush.NewContext(app.Sessions),
+		cctx:        crush.NewContext(app.Sessions),
 		keyMap:      DefaultKeyMap(),
 		header:      header.New(app.LSPClients),
 		sidebar:     sidebar.New(app.History, app.LSPClients, false),
@@ -759,7 +759,7 @@ func (p *chatPage) setShowDetails(show bool) {
 
 func (p *chatPage) toggleDetails() {
 	if !p.hasActiveSession || !p.compact {
-	// if p.session.ID == "" || !p.compact {
+		// if p.session.ID == "" || !p.compact {
 		return
 	}
 	p.setShowDetails(!p.showingDetails)

@@ -12,12 +12,12 @@ import (
 )
 
 type mockSessionRepo struct {
-	createInvoked bool
+	createInvoked  bool
 	createdSession session.Session
 	createErr      error
 	getInvoked     bool
 	toGetSession   session.Session
-	getErr error
+	getErr         error
 }
 
 func (m *mockSessionRepo) Create(ctx context.Context, title string) (session.Session, error) {
