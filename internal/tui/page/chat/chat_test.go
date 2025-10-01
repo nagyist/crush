@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/crush/internal/message"
 	"github.com/charmbracelet/crush/internal/session"
 	"github.com/charmbracelet/crush/internal/tui/components/chat"
+	"github.com/charmbracelet/crush/internal/tui/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +73,7 @@ func TestOnSendChatMessage_RunsAgentWithMessageDataButAgentFailsToRun(t *testing
 		ID: "test-chat-session",
 	}
 	agentRunner := mockAgentRunner{
-		errOnRun: errors.New("agent failed to run"),
+		errOnRun: errors.New("test err agent failed to run"),
 	}
 	cctx := mockCrushCtx{
 		currentSession: currentSess,
@@ -84,6 +85,12 @@ func TestOnSendChatMessage_RunsAgentWithMessageDataButAgentFailsToRun(t *testing
 
 	require.Len(t, cmds, 2)
 	assert.IsType(t, chat.SessionSelectedMsg{}, cmds[0]())
+	reportedErrMsg := cmds[1]()
+	assert.IsType(t, util.InfoMsg{}, reportedErrMsg)
+	assert.Equal(t, util.InfoMsg{
+		Type: 2,
+		Msg:  "test err agent failed to run",
+	}, reportedErrMsg)
 	assert.Equal(t, currentSess.ID, agentRunner.idOfSessionRanWithin)
 	assert.Equal(t, "Fake message for test", agentRunner.ranWithMsgText)
 	assert.Nil(t, agentRunner.ranWithMsgAttachments)
