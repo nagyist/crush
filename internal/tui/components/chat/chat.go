@@ -30,7 +30,9 @@ type Msg struct {
 	Attachments []message.Attachment
 }
 
-type SessionSelectedMsg = session.Session
+type SessionSelectedMsg struct {
+	session.Session
+}
 
 type SessionClearedMsg struct{}
 
@@ -52,7 +54,7 @@ type MessageListCmp interface {
 	layout.Focusable
 	layout.Help
 
-	SetSession(session.Session) tea.Cmd
+	SetSession(SessionSelectedMsg) tea.Cmd
 	GoToBottom() tea.Cmd
 	GetSelectedText() string
 	CopySelectedText(bool) tea.Cmd
@@ -539,13 +541,13 @@ func (m *messageListCmp) handleNewAssistantMessage(msg message.Message) tea.Cmd 
 }
 
 // SetSession loads and displays messages for a new session.
-func (m *messageListCmp) SetSession(session session.Session) tea.Cmd {
-	if m.session.ID == session.ID {
+func (m *messageListCmp) SetSession(selectedSession SessionSelectedMsg) tea.Cmd {
+	if m.session.ID == selectedSession.ID {
 		return nil
 	}
 
-	m.session = session
-	sessionMessages, err := m.app.Messages.List(context.Background(), session.ID)
+	m.session = selectedSession.Session
+	sessionMessages, err := m.app.Messages.List(context.Background(), selectedSession.ID)
 	if err != nil {
 		return util.ReportError(err)
 	}

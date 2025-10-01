@@ -104,7 +104,7 @@ func (s *sessionDialogCmp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return s, tea.Sequence(
 					util.CmdHandler(dialogs.CloseDialogMsg{}),
 					util.CmdHandler(
-						chat.SessionSelectedMsg(selected.Value()),
+						chat.SessionSelectedMsg{Session: selected.Value()},
 					),
 				)
 			}

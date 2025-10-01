@@ -685,7 +685,7 @@ func (p *chatPage) newSession() tea.Cmd {
 	)
 }
 
-func (p *chatPage) setSession(session session.Session) tea.Cmd {
+func (p *chatPage) setSession(session chat.SessionSelectedMsg) tea.Cmd {
 	/*
 		if p.session.ID == session.ID {
 			return nil
@@ -704,9 +704,9 @@ func (p *chatPage) setSession(session session.Session) tea.Cmd {
 	// the currently active one would be in the crush context itself
 	cmds = append(cmds, p.SetSize(p.width, p.height))
 	cmds = append(cmds, p.chat.SetSession(session))
-	cmds = append(cmds, p.sidebar.SetSession(session))
-	cmds = append(cmds, p.header.SetSession(session))
-	cmds = append(cmds, p.editor.SetSession(session))
+	cmds = append(cmds, p.sidebar.SetSession(session.Session))
+	cmds = append(cmds, p.header.SetSession(session.Session))
+	cmds = append(cmds, p.editor.SetSession(session.Session))
 
 	return tea.Sequence(cmds...)
 }
@@ -769,36 +769,33 @@ func (p *chatPage) toggleDetails() {
 //
 // this is likely where we can go about storing the history of user generated/sent messages
 func (p *chatPage) sendMessage(msg chat.Msg) tea.Cmd {
-	return onSendChatMessage(p.cctx, msg)
+	return tea.Batch(onSendChatMessage(p.cctx, msg)...)
 }
 
-func onSendChatMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
+func onSendChatMessage(cctx crush.Context, msg chat.Msg) []tea.Cmd {
 	session, err := cctx.ResolveCurrentSession()
 	if err != nil {
-		cmd = util.ReportError(err)
-		return
+		return []tea.Cmd{util.ReportError(err)}
 	}
 
 	// NOTE(tauraamui) [29/09/2025]:
 	// if we were able to resolve the session, we now still want to emit the selected session
 	// message no matter what else fails/errors
 	cmds := []tea.Cmd{
-		util.CmdHandler(chat.SessionSelectedMsg(session)),
+		util.CmdHandler(chat.SessionSelectedMsg{Session: session}),
 	}
-	defer func() {
-		cmd = tea.Batch(cmds...)
-	}()
 
 	agent, intialised := cctx.CoderAgent()
 	if !intialised {
 		cmds = append(cmds, util.ReportError(errors.New("coder agent is not initialized")))
-		return
+		return cmds
 	}
 	if _, err := agent.Run(context.Background(), session.ID, msg.Text, msg.Attachments...); err != nil {
 		cmds = append(cmds, util.ReportError(err))
-		return
+		return cmds
 	}
-	return
+
+	return cmds
 }
 
 func (p *chatPage) Bindings() []key.Binding {
