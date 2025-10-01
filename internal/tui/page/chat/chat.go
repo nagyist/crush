@@ -769,10 +769,10 @@ func (p *chatPage) toggleDetails() {
 //
 // this is likely where we can go about storing the history of user generated/sent messages
 func (p *chatPage) sendMessage(msg chat.Msg) tea.Cmd {
-	return chatSendMessage(p.cctx, msg)
+	return onSendChatMessage(p.cctx, msg)
 }
 
-func chatSendMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
+func onSendChatMessage(cctx crush.Context, msg chat.Msg) (cmd tea.Cmd) {
 	session, err := cctx.ResolveCurrentSession()
 	if err != nil {
 		cmd = util.ReportError(err)

@@ -47,10 +47,14 @@ type AgentEvent struct {
 	Done      bool
 }
 
+type Runner interface {
+	Run(ctx context.Context, sessionID string, content string, attachments ...message.Attachment) (<-chan AgentEvent, error)
+}
+
 type Service interface {
 	pubsub.Suscriber[AgentEvent]
 	Model() catwalk.Model
-	Run(ctx context.Context, sessionID string, content string, attachments ...message.Attachment) (<-chan AgentEvent, error)
+	Runner
 	Cancel(sessionID string)
 	CancelAll()
 	IsSessionBusy(sessionID string) bool
