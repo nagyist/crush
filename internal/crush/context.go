@@ -4,18 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/charmbracelet/crush/internal/history"
 	"github.com/charmbracelet/crush/internal/llm/agent"
 	"github.com/charmbracelet/crush/internal/session"
-	"github.com/charmbracelet/crush/internal/tui/components/chat"
 )
-
-type StorePromptMsg struct {
-	msg chat.Msg
-}
-
-type PromptHistory struct {
-	SessionID int
-}
 
 type Context interface {
 	CoderAgent() (agent.Runner, bool)
@@ -23,14 +15,16 @@ type Context interface {
 	ResolveCurrentSession() (session.Session, error)
 }
 
-func NewContext(sessRepo session.Repository) Context {
+func NewContext(sessRepo session.Repository, promptRepo history.PromptRepository) Context {
 	return &ccontext{
-		sessRepo: sessRepo,
+		sessRepo:    sessRepo,
+		historyRepo: promptRepo,
 	}
 }
 
 type ccontext struct {
 	sessRepo       session.Repository
+	historyRepo    history.PromptRepository
 	currentSession *session.Session
 	coderAgent     agent.Service
 }

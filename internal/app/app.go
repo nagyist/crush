@@ -26,10 +26,11 @@ import (
 )
 
 type App struct {
-	Sessions    session.Service
-	Messages    message.Service
-	History     history.Service
-	Permissions permission.Service
+	Sessions         session.Service
+	Messages         message.Service
+	History          history.Service
+	PromptRepository history.PromptRepository
+	Permissions      permission.Service
 
 	CoderAgent agent.Service
 

@@ -25,6 +25,15 @@ type File struct {
 	UpdatedAt int64
 }
 
+type Prompt struct {
+	Content string
+}
+
+type PromptRepository interface {
+	AddToSession(ctx context.Context, sessionID string, p Prompt) error
+	WipeBySession(ctx context.Context, sessionID string) error
+}
+
 type Service interface {
 	pubsub.Suscriber[File]
 	Create(ctx context.Context, sessionID, path, content string) (File, error)

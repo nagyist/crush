@@ -125,7 +125,7 @@ type chatPage struct {
 func New(app *app.App) ChatPage {
 	return &chatPage{
 		app:         app,
-		cctx:        crush.NewContext(app.Sessions),
+		cctx:        crush.NewContext(app.Sessions, app.PromptRepository),
 		keyMap:      DefaultKeyMap(),
 		header:      header.New(app.LSPClients),
 		sidebar:     sidebar.New(app.History, app.LSPClients, false),
